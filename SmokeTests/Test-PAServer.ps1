@@ -1,12 +1,13 @@
 Set-Location $PSScriptRoot
 
-# find out RAD Studio directory
+Write-Verbose "Finding out RAD Studio directory"
 $BDSVersion = "22.0"
 $BDSDirectory = (Get-ItemProperty `
     -Path "registry::HKEY_CURRENT_USER\SOFTWARE\Embarcadero\BDS\$BDSVersion" `
     -Name RootDir).RootDir
+Write-Debug "`$BDSDirectory=$BDSDirectory"
 
-# Check if RAD Studio path is correct and there is PAClient in it.
+Write-Verbose "Checking if RAD Studio path is correct and there is PAClient in it"
 $PAClient="$BDSDirectory\bin\paclient.exe"
 if(-not $(Test-Path $PAClient)){
     throw -join(
@@ -14,28 +15,33 @@ if(-not $(Test-Path $PAClient)){
         "Please check if RAD Studio is installed."
     )
 }
+Write-Verbose "...ok"
 
 # Assign specific vars based on $PAClient
 $PAClientFileInfo = Get-Item $PAClient
 $PAClientFileName= -join ($PAClientFileInfo.BaseName, $PAClientFileInfo.Extension)
 
-# Try file upload
+Write-Verbose "Trying file upload"
 & $PAClient --host=localhost --put=$PAClient,. > $null
 if (-not $?) {
     throw "PAServer does not work - cannot upload file"
 }
+Write-Verbose "...ok"
 
-# Try file download
+Write-Verbose "Trying file download"
 & $PAClient --host=localhost --get=./$PAClientFilename,. > $null
 if (-not $(Test-Path ./$PAClientFilename)) {
     throw "PAServer does not seem to work - cannot download file"
 }
+Write-Verbose "...ok"
 
 try {
-    # Check if file intact
+    Write-Verbose "Checking if file intact"
     if (Compare-Object -ReferenceObject $(Get-Content $PAClient) -DifferenceObject $(Get-Content $PAClientFileName)) {
         throw "PAServer does not seem to work - file downloaded differs from file uploaded"
     }
+    Write-Verbose "...ok"
+
 }
 finally {
     Remove-Item $PAClientFileName
