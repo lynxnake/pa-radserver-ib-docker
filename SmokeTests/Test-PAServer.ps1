@@ -8,7 +8,7 @@ $BDSDirectory = (Get-ItemProperty `
 Write-Debug "`$BDSDirectory=$BDSDirectory"
 
 Write-Verbose "Checking if RAD Studio path is correct and there is PAClient in it"
-$PAClient="$BDSDirectory\bin\paclient.exe"
+$PAClient=Join-Path -Path $BDSDirectory -ChildPath "bin\paclient.exe"
 if(-not $(Test-Path $PAClient)){
     throw -join(
         "Cannot continue - there is no PAClient executable at the path `"$PAClient`".`n",
