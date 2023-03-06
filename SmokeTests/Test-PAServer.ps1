@@ -22,21 +22,22 @@ $PAClientFileInfo = Get-Item $PAClient
 $PAClientFileName= -join ($PAClientFileInfo.BaseName, $PAClientFileInfo.Extension)
 
 Write-Verbose "Trying file upload"
-& $PAClient --host=localhost --put=$PAClient,. > $null
-if (-not $?) {
+Invoke-Expression "$PAClient --host=localhost --put=$PAClient,." > $null
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) {
+    Write-Verbose "`$LASTEXITCODE = $LASTEXITCODE"
     throw "PAServer does not work - cannot upload file"
 }
 Write-Verbose "...ok"
 
 Write-Verbose "Trying file download"
-& $PAClient --host=localhost --get=./$PAClientFilename,. > $null
+Invoke-Expression "$PAClient --host=localhost --get=./$PAClientFilename,." > $null
 if (-not $(Test-Path ./$PAClientFilename)) {
     throw "PAServer does not seem to work - cannot download file"
 }
 Write-Verbose "...ok"
 
 try {
-    Write-Verbose "Checking if file intact"
+    Write-Verbose "Checking if file is intact"
     if (Compare-Object -ReferenceObject $(Get-Content $PAClient) -DifferenceObject $(Get-Content $PAClientFileName)) {
         throw "PAServer does not seem to work - file downloaded differs from file uploaded"
     }
